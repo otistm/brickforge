@@ -1,0 +1,28 @@
+/* Self-hosted fonts (replaces Google Fonts CDN), latin subsets only */
+@import "@fontsource/fredoka/latin-400.css";
+@import "@fontsource/fredoka/latin-500.css";
+@import "@fontsource/fredoka/latin-600.css";
+@import "@fontsource/fredoka/latin-700.css";
+@import "@fontsource/fredoka/latin-ext-400.css";
+@import "@fontsource/fredoka/latin-ext-500.css";
+@import "@fontsource/fredoka/latin-ext-600.css";
+@import "@fontsource/fredoka/latin-ext-700.css";
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/inter/latin-ext-400.css";
+@import "@fontsource/inter/latin-ext-500.css";
+@import "@fontsource/inter/latin-ext-600.css";
+@import "@fontsource/inter/latin-ext-700.css";
+
+/* Design tokens + component layers */
+@import "./tokens.css";
+@import "./base.css";
+@import "./topbar.css";
+@import "./toolrail.css";
+@import "./inventory.css";
+@import "./booklet.css";
+@import "./display.css";
+@import "./responsive.css";
+@import "./print.css";

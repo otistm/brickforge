@@ -1,0 +1,16 @@
+.mobtabs{display:none;}
+@media (max-width:880px){
+  .title small{display:none;}
+  .toolrail{left:0; right:0; top:auto; bottom:0; width:auto; max-height:52vh; border-radius:18px 18px 0 0;
+    transform:translateY(105%); transition:transform .28s ease;}
+  .toolrail.open{transform:translateY(0);}
+  .inv{left:0; right:0; top:auto; bottom:0; width:auto; max-height:60vh; border-radius:18px 18px 0 0;
+    transform:translateY(105%); transition:transform .28s ease;}
+  .inv.open{transform:translateY(0);}
+  .mobtabs{display:flex; position:fixed; left:50%; transform:translateX(-50%); bottom:14px; z-index:32; gap:8px;}
+  .hint{display:none;}
+  .swatches{grid-template-columns:repeat(8,1fr);}
+  .shapes{grid-template-columns:repeat(5,1fr);}
+}
+
+@media (max-width:880px){ .bk-grid{grid-template-columns:1fr;} .page{padding:24px 20px 16px;} .ck-title{font-size:32px;} }

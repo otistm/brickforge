@@ -1,0 +1,8 @@
+:root{
+  --paper:#FBFAF6; --ink:#1A1611; --soft:#6A6354; --line:#E8E2D4;
+  --red:#D81E26; --red-d:#B0151C; --yellow:#F5C518; --stud:#0b0b0c;
+  --ok:#2FB873; --bad:#E0484B;
+  --stage-1:#E4EAF0; --stage-2:#F6F8FA;
+  --shadow:0 12px 30px -12px rgba(31,26,16,.28), 0 2px 6px rgba(31,26,16,.06);
+  --r:14px;
+}
