@@ -12,3 +12,8 @@
   text-transform:uppercase; color:var(--soft); margin-top:3px;}
 .spacer{flex:1;}
 .topgroup{display:flex; gap:8px; pointer-events:auto;}
+
+/* Dark-mode toggle: show moon in light theme, sun in dark theme */
+#btnTheme .ic-sun{display:none;}
+:root[data-theme="dark"] #btnTheme .ic-moon{display:none;}
+:root[data-theme="dark"] #btnTheme .ic-sun{display:inline;}

@@ -1,10 +1,14 @@
-#bookletOverlay{position:fixed; inset:0; z-index:80; background:#ECE7DC; display:none; flex-direction:column;}
+#bookletOverlay{position:fixed; inset:0; z-index:80; background:var(--booklet-bg); display:none; flex-direction:column;}
 #bookletOverlay.show{display:flex;}
 #bookletBar{height:58px; flex:none; display:flex; align-items:center; gap:10px; padding:0 16px;
   background:var(--paper); border-bottom:1px solid var(--line); box-shadow:var(--shadow); z-index:2;}
 #bookletBar .bk-h{font-family:Fredoka; font-weight:700; font-size:18px;}
 #bookletBar .spacer{flex:1;}
-#bookletPages{flex:1; overflow-y:auto; padding:26px 16px 70px; display:flex; flex-direction:column; align-items:center; gap:26px;}
+#bookletPages{flex:1; overflow-y:auto; padding:26px 16px 70px; display:flex; flex-direction:column; align-items:center; gap:26px;
+  /* Pages emulate printed white paper, so pin the light palette here — otherwise
+     dark-theme tokens make the headings near-invisible on the white pages. */
+  --ink:#1A1611; --soft:#6A6354; --line:#E8E2D4; --paper:#FBFAF6; --red:#D81E26; --red-d:#B0151C;
+  color:var(--ink);}
 .booklet-loading{margin-top:90px; color:var(--soft); font-weight:600; font-size:15px; display:flex; flex-direction:column; align-items:center; gap:14px;}
 .booklet-loading .spin{width:30px; height:30px; border:3px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:bkspin .8s linear infinite;}
 @keyframes bkspin{to{transform:rotate(360deg);}}
@@ -53,6 +57,6 @@
 .st-ctitle{font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--soft);}
 .st-cit{display:flex; align-items:center; gap:9px;}
 .st-cit b{font-family:Fredoka; font-weight:600; font-size:15px; margin-left:auto;}
-.st-stage{flex:1; display:flex; align-items:center; justify-content:center;
-  background:radial-gradient(120% 120% at 50% 25%, #fff, #E9EDF2); border-radius:16px; margin:10px 0 0; min-height:46vh; border:1px solid var(--line);}
-.st-stage img{max-width:94%; max-height:58vh; object-fit:contain;}
+.st-stage{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  background:radial-gradient(120% 120% at 50% 25%, #fff, #E9EDF2); border-radius:16px; margin:10px 0 0; border:1px solid var(--line);}
+.st-stage img{max-width:100%; max-height:100%; object-fit:contain;}

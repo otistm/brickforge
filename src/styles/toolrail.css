@@ -12,15 +12,15 @@
   background:radial-gradient(circle at 32% 30%, rgba(255,255,255,.55), transparent 55%);}
 
 .shapes{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
-.shapebtn{border:1px solid var(--line); background:#fff; border-radius:10px; padding:8px 3px 5px; cursor:pointer;
+.shapebtn{border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:8px 3px 5px; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:3px; transition:transform .08s; color:var(--ink);}
 .shapebtn:hover{transform:translateY(-1px);}
-.shapebtn.on{background:var(--ink); color:#fff; border-color:var(--ink);}
+.shapebtn.on{background:var(--ink); color:var(--paper); border-color:var(--ink);}
 .shapebtn svg{width:30px; height:24px;}
 .shapebtn span{font-size:10px; font-weight:600; letter-spacing:.01em;}
 
 .sizes{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
-.sizebtn{border:1px solid var(--line); background:#fff; border-radius:9px; padding:8px 4px; cursor:pointer;
+.sizebtn{border:1px solid var(--line); background:var(--surface); border-radius:9px; padding:8px 4px; cursor:pointer;
   font-family:Inter; font-weight:600; font-size:13px; color:var(--ink); transition:transform .08s;}
 .sizebtn:hover{transform:translateY(-1px);}
 .sizebtn.on{background:var(--red); color:#fff; border-color:var(--red-d);}

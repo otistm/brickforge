@@ -11,6 +11,7 @@ import { initShareIo } from "./features/shareIo";
 import { initToolRail, rotateSelection } from "./ui/controls";
 import { flashHint } from "./ui/toast";
 import { initMobileTabs } from "./ui/mobileTabs";
+import { initTheme } from "./ui/theme";
 
 // Wire cross-layer hooks (avoids engine -> feature/ui import cycles).
 onInventoryChange(refreshInventory);
@@ -18,6 +19,7 @@ setFlashHint(flashHint);
 setRotateSelection(rotateSelection);
 
 // UI + feature wiring.
+initTheme();
 initToolRail();
 initShareIo();
 initDisplay();

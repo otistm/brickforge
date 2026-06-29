@@ -3,6 +3,21 @@
   --red:#D81E26; --red-d:#B0151C; --yellow:#F5C518; --stud:#0b0b0c;
   --ok:#2FB873; --bad:#E0484B;
   --stage-1:#E4EAF0; --stage-2:#F6F8FA;
+  /* Semantic surfaces (themable) */
+  --surface:#ffffff; --surface-hover:#ffffff; --ghost-bg:rgba(255,255,255,.7);
+  --toast-bg:#1A1611; --booklet-bg:#ECE7DC; --display-1:#ffffff; --display-2:#d7dde4;
+  --scroll:#d9d3c4;
   --shadow:0 12px 30px -12px rgba(31,26,16,.28), 0 2px 6px rgba(31,26,16,.06);
   --r:14px;
+}
+
+:root[data-theme="dark"]{
+  --paper:#1c1915; --ink:#F1EBDF; --soft:#9d9583; --line:#332e25;
+  --red:#E8333B; --red-d:#C71D24; --yellow:#F5C518; --stud:#0b0b0c;
+  --ok:#3CCB80; --bad:#E0484B;
+  --stage-1:#14171c; --stage-2:#1e232a;
+  --surface:#272219; --surface-hover:#2f2a20; --ghost-bg:rgba(30,27,21,.72);
+  --toast-bg:#34302a; --booklet-bg:#0f0d0a; --display-1:#1a1e24; --display-2:#0b0d11;
+  --scroll:#3a342a;
+  --shadow:0 12px 30px -14px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.38);
 }
