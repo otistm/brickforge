@@ -7,10 +7,10 @@ import { brickAt, screenToPlacement } from "./placement";
 import { camera, cvs } from "./scene";
 
 export const cam = {
-  theta: 0.85,
-  phi: 1.0,
-  radius: 340,
-  target: new THREE.Vector3(0, 16, 0),
+  theta: 0.82,
+  phi: 1.06,
+  radius: 480,
+  target: new THREE.Vector3(0, -28, 0),
 };
 
 export function applyCamera(): void {
@@ -37,7 +37,8 @@ export function panCamera(dx: number, dy: number): void {
 
 export function clampCam(): void {
   cam.phi = Math.max(0.12, Math.min(Math.PI * 0.495, cam.phi));
-  cam.radius = Math.max(70, Math.min(900, cam.radius));
+  // Cap zoom-out so the orbiting camera stays inside the room walls.
+  cam.radius = Math.max(70, Math.min(720, cam.radius));
 }
 
 interface PointerInfo {

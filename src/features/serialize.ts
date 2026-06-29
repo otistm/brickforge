@@ -15,8 +15,9 @@ export function serialize(): SerializedBrick[] {
 export function frameToBuild(): void {
   let maxY = 0;
   for (const b of bricks) maxY = Math.max(maxY, b.gy + b.h);
-  cam.target.set(0, maxY * PLATE * 0.4, 0);
-  cam.radius = Math.max(180, baseW * 0.95);
+  // Frame the build but stay pulled back enough to keep the table + room in view.
+  cam.target.set(0, maxY * PLATE * 0.4 - 24, 0);
+  cam.radius = Math.max(360, baseW * 1.2);
   applyCamera();
 }
 

@@ -1,3 +1,4 @@
+import { applyRoomTheme } from "../engine/scene";
 import { $id } from "./dom";
 
 const KEY = "bf-theme";
@@ -15,6 +16,7 @@ function stored(): Theme | null {
 
 function apply(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
+  applyRoomTheme(theme);
 }
 
 /** Wires the topbar toggle and keeps the theme in sync with the OS preference. */

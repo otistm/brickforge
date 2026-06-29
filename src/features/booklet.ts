@@ -8,7 +8,7 @@ import { applyCamera, cam, clampCam } from "../engine/cameraControls";
 import { hideGhost, isGhostVisible, setGhostVisible } from "../engine/ghost";
 import { clearHighlight } from "../engine/highlight";
 import { resize } from "../engine/loop";
-import { baseBox, baseStuds, camera, renderer, scene, shadowCatcher } from "../engine/scene";
+import { baseBox, baseStuds, camera, renderer, scene, setEnvironmentVisible, shadowCatcher } from "../engine/scene";
 import { $id } from "../ui/dom";
 import { toast } from "../ui/toast";
 import { groupBricks, type PartGroup } from "./inventory";
@@ -69,6 +69,8 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   const ghostVis = isGhostVisible();
   hideGhost();
   clearHighlight();
+  // Keep instruction images clean — no room/table behind the model.
+  setEnvironmentVisible(false);
 
   const orig = new Map<THREE.Object3D, StoredMaterial>();
   for (const b of bricks)
@@ -123,6 +125,7 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   baseBox.visible = true;
   if (baseStuds) baseStuds.visible = true;
   shadowCatcher.visible = false;
+  setEnvironmentVisible(true);
   setGhostVisible(ghostVis);
   cam.theta = saved.theta;
   cam.phi = saved.phi;

@@ -29,7 +29,7 @@ sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 {
   const sc = sun.shadow.camera as THREE.OrthographicCamera;
-  const span = BASE_STUDS * STUD * 0.75;
+  const span = BASE_STUDS * STUD * 0.95;
   sc.left = -span; sc.right = span; sc.top = span; sc.bottom = -span; sc.near = 10; sc.far = 900;
 }
 sun.shadow.bias = -0.0004;
@@ -76,3 +76,77 @@ shadowCatcher.position.y = 0.02;
 shadowCatcher.receiveShadow = true;
 shadowCatcher.visible = false;
 scene.add(shadowCatcher);
+
+/* ---------------- room + table ----------------
+   The baseplate sits on a wooden table inside a simple enclosed room. The
+   camera orbits inside the room (see clampCam's max radius), and there is no
+   ceiling so high/top-down angles look down into the space. */
+export const ROOM_HALF = 820;
+const FLOOR_Y = -250;
+const WALL_H = 650;
+/** The baseplate's underside — the table surface is flush with it. */
+const TABLE_SURFACE_Y = -PLATE * 1.6;
+const TABLE_THICK = 18;
+const TABLE_HALF = baseW * 0.82;
+
+export const room = new THREE.Group();
+room.name = "room";
+
+const floorMat = new THREE.MeshStandardMaterial({ color: 0xb9b2a4, roughness: 0.97, metalness: 0 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_HALF * 2, ROOM_HALF * 2), floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = FLOOR_Y;
+floor.receiveShadow = true;
+room.add(floor);
+
+/** Room wall colors: soft light blue by day, deep midnight blue in dark mode. */
+const WALL_LIGHT = 0xb8d4ec;
+const WALL_DARK = 0x1c2747;
+const wallMat = new THREE.MeshStandardMaterial({
+  color: WALL_LIGHT, roughness: 1, metalness: 0, side: THREE.DoubleSide,
+});
+function addWall(x: number, z: number, ry: number): void {
+  const w = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_HALF * 2, WALL_H), wallMat);
+  w.position.set(x, FLOOR_Y + WALL_H / 2, z);
+  w.rotation.y = ry;
+  room.add(w);
+}
+addWall(0, -ROOM_HALF, 0);              // back
+addWall(0, ROOM_HALF, Math.PI);         // front
+addWall(-ROOM_HALF, 0, Math.PI / 2);    // left
+addWall(ROOM_HALF, 0, -Math.PI / 2);    // right
+
+const woodMat = new THREE.MeshStandardMaterial({ color: 0x6b4424, roughness: 0.6, metalness: 0 });
+const tableTop = new THREE.Mesh(
+  new THREE.BoxGeometry(TABLE_HALF * 2, TABLE_THICK, TABLE_HALF * 2),
+  woodMat
+);
+tableTop.position.set(0, TABLE_SURFACE_Y - TABLE_THICK / 2, 0);
+tableTop.receiveShadow = true;
+tableTop.castShadow = true;
+room.add(tableTop);
+
+const legMat = new THREE.MeshStandardMaterial({ color: 0x563418, roughness: 0.7, metalness: 0 });
+const legTopY = TABLE_SURFACE_Y - TABLE_THICK;
+const legH = legTopY - FLOOR_Y;
+const legSize = 22;
+const legInset = TABLE_HALF - 30;
+for (const sx of [-1, 1])
+  for (const sz of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(legSize, legH, legSize), legMat);
+    leg.position.set(sx * legInset, FLOOR_Y + legH / 2, sz * legInset);
+    leg.castShadow = true;
+    room.add(leg);
+  }
+
+scene.add(room);
+
+/** Toggles the room + table (hidden while capturing clean instruction images). */
+export function setEnvironmentVisible(v: boolean): void {
+  room.visible = v;
+}
+
+/** Recolors the room walls to match the active UI theme. */
+export function applyRoomTheme(theme: "light" | "dark"): void {
+  wallMat.color.set(theme === "dark" ? WALL_DARK : WALL_LIGHT);
+}
