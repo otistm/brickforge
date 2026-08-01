@@ -8,7 +8,16 @@ import { applyCamera, cam, clampCam } from "../engine/cameraControls";
 import { hideGhost, isGhostVisible, setGhostVisible } from "../engine/ghost";
 import { clearHighlight } from "../engine/highlight";
 import { resize } from "../engine/loop";
-import { baseBox, baseStuds, camera, renderer, scene, setEnvironmentVisible, shadowCatcher } from "../engine/scene";
+import {
+  baseBox,
+  baseStuds,
+  perspectiveCamera,
+  renderer,
+  scene,
+  setEnvironmentVisible,
+  setInstructionCamera,
+  shadowCatcher,
+} from "../engine/scene";
 import { $id } from "../ui/dom";
 import { toast } from "../ui/toast";
 import { groupBricks, type PartGroup } from "./inventory";
@@ -17,6 +26,7 @@ import { pieceSVG } from "./pieceSvg";
 // Medium gray so already-placed pieces stay clearly visible as context
 // (a near-white dim made earlier pieces vanish, making new ones look floating).
 const dimMat = new THREE.MeshStandardMaterial({ color: 0x9aa0a8, roughness: 0.72, metalness: 0 });
+const CAPTURE_CLEAR = 0xf0f3f6;
 
 function buildSteps(): Brick[][] {
   const sorted = [...bricks].sort((a, b) => a.gy - b.gy || a.gz - b.gz || a.gx - b.gx);
@@ -54,9 +64,20 @@ function buildBounds(): { center: THREE.Vector3; radius: number } {
 type StoredMaterial = THREE.Material | THREE.Material[];
 
 function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
-  const SZ = 860;
-  renderer.setSize(SZ, SZ);
+  const SZ = 720;
   const saved = { theta: cam.theta, phi: cam.phi, radius: cam.radius, target: cam.target.clone() };
+  const ghostVis = isGhostVisible();
+  const usedOrtho = view.pieceLook === "instructions";
+  const prevClear = new THREE.Color();
+  renderer.getClearColor(prevClear);
+  const prevAlpha = renderer.getClearAlpha();
+
+  // Booklet shots always use perspective + an opaque clear so print/PDF engines
+  // get real pixels (ortho + transparent canvases often come out blank).
+  if (usedOrtho) setInstructionCamera(false);
+  renderer.setClearColor(CAPTURE_CLEAR, 1);
+  renderer.setSize(SZ, SZ, false);
+
   const bb = buildBounds();
   // Keep the user's current viewing angle so the booklet matches the model they
   // built; only reframe the target + distance to fit the whole build.
@@ -64,20 +85,9 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   cam.radius = bb.radius * 2.75;
   clampCam();
   applyCamera();
-  // Square capture: perspective uses aspect; ortho frustum is forced square.
-  if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
-    (camera as THREE.PerspectiveCamera).aspect = 1;
-    camera.updateProjectionMatrix();
-  } else {
-    const ortho = camera as THREE.OrthographicCamera;
-    const half = cam.radius * 0.42;
-    ortho.left = -half;
-    ortho.right = half;
-    ortho.top = half;
-    ortho.bottom = -half;
-    ortho.updateProjectionMatrix();
-  }
-  const ghostVis = isGhostVisible();
+  perspectiveCamera.aspect = 1;
+  perspectiveCamera.updateProjectionMatrix();
+
   hideGhost();
   clearHighlight();
   // Keep instruction images clean — no room/table behind the model.
@@ -97,67 +107,73 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   const baseDecor = scene.children.filter(
     (c) => c.userData.isOutline || c.userData.isEdgeLines
   );
-  // hero — clean "floating" model for the cover (no baseplate)
-  baseBox.visible = false;
-  if (baseStuds) baseStuds.visible = false;
-  baseDecor.forEach((o) => { o.visible = false; });
-  shadowCatcher.visible = true;
-  for (const b of bricks) {
-    b.group.visible = true;
-    b.group.traverse((o) => {
-      if (isHelper(o)) return;
-      const stored = orig.get(o);
-      if (stored) (o as THREE.Mesh).material = stored;
-    });
-  }
-  renderer.render(scene, camera);
-  const hero = renderer.domElement.toDataURL("image/png");
 
-  // steps — keep the live look: baseplate only when not in instruction style
-  const showBase = view.pieceLook !== "instructions";
-  baseBox.visible = showBase;
-  if (baseStuds) baseStuds.visible = showBase;
-  baseDecor.forEach((o) => { o.visible = showBase; });
-  shadowCatcher.visible = false;
+  let hero = "";
   const imgs: string[] = [];
-  const cumSet = new Set<Brick>();
-  for (const stepBricks of steps) {
-    const newSet = new Set(stepBricks);
-    stepBricks.forEach((b) => cumSet.add(b));
+
+  try {
+    // hero — clean "floating" model for the cover (no baseplate)
+    baseBox.visible = false;
+    if (baseStuds) baseStuds.visible = false;
+    baseDecor.forEach((o) => { o.visible = false; });
+    shadowCatcher.visible = false;
     for (const b of bricks) {
-      const inCum = cumSet.has(b);
-      b.group.visible = inCum;
+      b.group.visible = true;
       b.group.traverse((o) => {
-        if (isHelper(o) || !(o as THREE.Mesh).material) return;
-        (o as THREE.Mesh).material = newSet.has(b) ? (orig.get(o) as StoredMaterial) : dimMat;
+        if (isHelper(o)) return;
+        const stored = orig.get(o);
+        if (stored) (o as THREE.Mesh).material = stored;
       });
     }
-    renderer.render(scene, camera);
-    imgs.push(renderer.domElement.toDataURL("image/png"));
+    renderer.render(scene, perspectiveCamera);
+    hero = renderer.domElement.toDataURL("image/png");
+
+    // steps — keep the live look: baseplate only when not in instruction style
+    const showBase = view.pieceLook !== "instructions";
+    baseBox.visible = showBase;
+    if (baseStuds) baseStuds.visible = showBase;
+    baseDecor.forEach((o) => { o.visible = showBase; });
+    const cumSet = new Set<Brick>();
+    for (const stepBricks of steps) {
+      const newSet = new Set(stepBricks);
+      stepBricks.forEach((b) => cumSet.add(b));
+      for (const b of bricks) {
+        const inCum = cumSet.has(b);
+        b.group.visible = inCum;
+        b.group.traverse((o) => {
+          if (isHelper(o) || !(o as THREE.Mesh).material) return;
+          (o as THREE.Mesh).material = newSet.has(b) ? (orig.get(o) as StoredMaterial) : dimMat;
+        });
+      }
+      renderer.render(scene, perspectiveCamera);
+      imgs.push(renderer.domElement.toDataURL("image/png"));
+    }
+  } finally {
+    for (const b of bricks) {
+      b.group.visible = true;
+      b.group.traverse((o) => {
+        if (isHelper(o)) return;
+        const stored = orig.get(o);
+        if ((o as THREE.Mesh).material && stored) (o as THREE.Mesh).material = stored;
+      });
+    }
+    // Restore: instruction look keeps an invisible base collider for placement.
+    baseBox.visible = true;
+    if (baseStuds) baseStuds.visible = view.pieceLook !== "instructions";
+    baseDecor.forEach((o) => { o.visible = view.pieceLook !== "instructions"; });
+    shadowCatcher.visible = false;
+    setEnvironmentVisible(view.showRoom);
+    setGhostVisible(ghostVis);
+    cam.theta = saved.theta;
+    cam.phi = saved.phi;
+    cam.radius = saved.radius;
+    cam.target.copy(saved.target);
+    renderer.setClearColor(prevClear, prevAlpha);
+    if (usedOrtho) setInstructionCamera(true);
+    applyCamera();
+    resize();
   }
 
-  // restore
-  for (const b of bricks) {
-    b.group.visible = true;
-    b.group.traverse((o) => {
-      if (isHelper(o)) return;
-      const stored = orig.get(o);
-      if ((o as THREE.Mesh).material && stored) (o as THREE.Mesh).material = stored;
-    });
-  }
-  // Restore: instruction look keeps an invisible base collider for placement.
-  baseBox.visible = true;
-  if (baseStuds) baseStuds.visible = view.pieceLook !== "instructions";
-  baseDecor.forEach((o) => { o.visible = view.pieceLook !== "instructions"; });
-  shadowCatcher.visible = false;
-  setEnvironmentVisible(view.showRoom);
-  setGhostVisible(ghostVis);
-  cam.theta = saved.theta;
-  cam.phi = saved.phi;
-  cam.radius = saved.radius;
-  cam.target.copy(saved.target);
-  applyCamera();
-  resize();
   return { hero, imgs };
 }
 
