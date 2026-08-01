@@ -6,6 +6,7 @@ import { resize, startLoop } from "./engine/loop";
 import { initBooklet } from "./features/booklet";
 import { initDisplay } from "./features/display";
 import { refreshInventory } from "./features/inventory";
+import { initScanInventory } from "./features/scanInventory";
 import { decode, loadData } from "./features/serialize";
 import { initShareIo } from "./features/shareIo";
 import { initToolRail, rotateSelection } from "./ui/controls";
@@ -25,6 +26,7 @@ initShareIo();
 initDisplay();
 initMobileTabs();
 initBooklet();
+initScanInventory();
 
 // Pointer/keyboard input + render loop.
 initControls();

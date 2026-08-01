@@ -1,10 +1,18 @@
 .inv{right:16px; top:74px; bottom:16px; width:286px; display:flex; flex-direction:column;}
-.inv-head{padding:16px 16px 12px; border-bottom:1px dashed var(--line);}
+.inv-head{padding:14px 14px 12px; border-bottom:1px dashed var(--line);}
+.inv-modes{display:flex; gap:6px; margin-bottom:12px;}
+.inv-mode{flex:1; font-family:Inter; font-weight:600; font-size:12px; border:1px solid var(--line);
+  background:transparent; color:var(--soft); padding:7px 8px; border-radius:9px; cursor:pointer;}
+.inv-mode.on{background:var(--surface); color:var(--ink); box-shadow:var(--shadow);}
 .inv-head .k{font-family:Fredoka; font-weight:600; font-size:16px;}
 .inv-head .k svg{width:17px; height:17px; vertical-align:-3px; margin-right:6px;}
 .inv-head .total{font-size:12px; color:var(--soft); margin-top:3px;}
+#invBuyBody, #invMinePane{flex:1; min-height:0; display:flex; flex-direction:column;}
+#invBuyBody[hidden], #invMinePane[hidden], #invBuyPane[hidden], #invMineHead[hidden]{display:none !important;}
 .inv-list{flex:1; overflow-y:auto; padding:10px 12px;}
 .inv-empty{color:var(--soft); font-size:13px; text-align:center; padding:36px 14px; line-height:1.6;}
+.inv-actions{padding:12px; border-top:1px dashed var(--line); display:flex; gap:8px;}
+.inv-actions .btn{flex:1; justify-content:center;}
 .part{display:flex; align-items:center; gap:11px; padding:8px 8px; border-radius:10px;}
 .part:hover{background:var(--surface);}
 .part .pic{width:44px; height:32px; flex:none; display:flex; align-items:center; justify-content:center;}
@@ -17,6 +25,14 @@
 .part .ct .ctn{font-family:Fredoka; font-weight:600; font-size:16px; color:var(--ink);}
 .part .ct .ctn i{color:var(--soft); font-family:Inter; font-weight:600; font-size:12px; font-style:normal;}
 .part .ct .sub{font-size:12px; font-weight:700; color:var(--red-d);}
+.mine-pic{overflow:hidden; background:var(--surface);}
+.mine-pic img{width:40px; height:30px; object-fit:contain; display:block;}
+.mine-ops{display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex:none;}
+.mine-qty{display:flex; align-items:center; gap:6px;}
+.mine-qty .ctn{font-family:Fredoka; font-weight:600; font-size:15px; min-width:1.2em; text-align:center;}
+.mine-step{width:24px; height:24px; border-radius:7px; border:1px solid var(--line); background:var(--surface);
+  color:var(--ink); font-weight:700; cursor:pointer; line-height:1;}
+.mine-use{padding:5px 8px !important; font-size:11px !important;}
 .inv-total{padding:12px 16px 14px; border-top:1px dashed var(--line); display:none; flex-direction:column; gap:5px;}
 .inv-total.show{display:flex;}
 .bd-row{display:flex; align-items:baseline; justify-content:space-between; font-size:13px; color:var(--ink);}

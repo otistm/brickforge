@@ -83,6 +83,41 @@ export function lookupPart(shape: ShapeKey, w: number, d: number): string | null
   return PART_NUMBERS[shape]?.[`${a}x${c}`] ?? null;
 }
 
+export interface PartLookup {
+  shape: ShapeKey;
+  w0: number;
+  d0: number;
+}
+
+let reversePartMap: Map<string, PartLookup> | null = null;
+
+function buildReversePartMap(): Map<string, PartLookup> {
+  const map = new Map<string, PartLookup>();
+  for (const shape of Object.keys(PART_NUMBERS) as ShapeKey[]) {
+    const sizes = PART_NUMBERS[shape];
+    if (!sizes) continue;
+    for (const [footprint, part] of Object.entries(sizes)) {
+      const [w0, d0] = footprint.split("x").map(Number) as [number, number];
+      const key = part.toLowerCase();
+      if (!map.has(key)) map.set(key, { shape, w0, d0 });
+    }
+  }
+  return map;
+}
+
+/** Resolves a BrickLink/Brickognize design id back to a builder piece, if known. */
+export function lookupByPartNumber(partId: string): PartLookup | null {
+  if (!reversePartMap) reversePartMap = buildReversePartMap();
+  const raw = partId.trim().toLowerCase();
+  if (!raw) return null;
+  const direct = reversePartMap.get(raw);
+  if (direct) return direct;
+  // Brickognize sometimes returns mold variants (e.g. 3070b → 3070).
+  const base = raw.replace(/[a-z]+$/i, "");
+  if (base && base !== raw) return reversePartMap.get(base) ?? null;
+  return null;
+}
+
 /** Resolves a color index to its BrickLink color id, or null when unknown. */
 export function blColorId(colorIdx: number): number | null {
   const entry = COLORS[colorIdx];

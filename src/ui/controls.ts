@@ -1,6 +1,7 @@
 import { COLORS } from "../config/colors";
 import { SHAPE_KEYS, SHAPES } from "../config/shapes";
 import { bricks, effSize, shapeDef, state, undoStack } from "../core/store";
+import type { ShapeKey } from "../core/types";
 import { addBrick, applyRotation, removeBrick } from "../engine/bricks";
 import { hideGhost, resetGhostKey } from "../engine/ghost";
 import { clearHighlight } from "../engine/highlight";
@@ -55,6 +56,7 @@ function buildSizes(): void {
 
 function buildSwatches(): void {
   const swEl = $id("swatches");
+  swEl.innerHTML = "";
   COLORS.forEach((c, i) => {
     const d = document.createElement("div");
     d.className = "swatch" + (i === state.colorIdx ? " on" : "");
@@ -72,6 +74,7 @@ function buildSwatches(): void {
 
 function buildShapes(): void {
   const shEl = $id("shapes");
+  shEl.innerHTML = "";
   SHAPE_KEYS.forEach((k) => {
     const S = SHAPES[k];
     const b = document.createElement("button");
@@ -92,6 +95,22 @@ function buildShapes(): void {
     };
     shEl.appendChild(b);
   });
+}
+
+/** Selects a piece in the tool rail (used by scan inventory / "Use"). */
+export function selectPiece(shape: ShapeKey, w: number, d: number, colorIdx?: number): void {
+  state.shape = shape;
+  const sizes = SHAPES[shape].sizes;
+  const match = sizes.find((s) => s[0] === w && s[1] === d) ?? sizes.find((s) => s[0] === d && s[1] === w);
+  state.size = match ? ([match[0], match[1]] as typeof state.size) : ([w, d] as typeof state.size);
+  state.rot = 0;
+  if (colorIdx != null && COLORS[colorIdx]) state.colorIdx = colorIdx;
+  buildSwatches();
+  buildShapes();
+  buildSizes();
+  updateSizeLabel();
+  selectBuildTool();
+  resetGhostKey();
 }
 
 export function initToolRail(): void {
