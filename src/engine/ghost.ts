@@ -37,9 +37,17 @@ function buildGhost(): void {
   const { group } = makeBrick(state.shape, w0, d0, COLORS[state.colorIdx][1]);
   // Clone materials so tweaking opacity/color doesn't mutate the shared cache.
   group.traverse((o) => {
+    if (o.userData.isOutline || o.userData.isEdgeLines || o.userData.isStudHighlight) {
+      const om = o as THREE.Mesh;
+      const mat = (om.material as THREE.Material).clone();
+      mat.transparent = true;
+      mat.opacity = 0.35;
+      om.material = mat;
+      return;
+    }
     const mesh = o as THREE.Mesh;
-    const mat = mesh.material as THREE.MeshStandardMaterial | undefined;
-    if (mat) {
+    const mat = mesh.material as THREE.MeshStandardMaterial | THREE.MeshToonMaterial | undefined;
+    if (mat && "color" in mat) {
       const cloned = mat.clone();
       cloned.transparent = true;
       cloned.opacity = 0.55;

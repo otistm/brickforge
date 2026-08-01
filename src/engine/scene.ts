@@ -18,10 +18,15 @@ stageEl.appendChild(renderer.domElement);
 /** Convenience handle to the WebGL canvas element. */
 export const cvs = renderer.domElement;
 
-export const camera = new THREE.PerspectiveCamera(45, 1, 1, 5000);
+export const perspectiveCamera = new THREE.PerspectiveCamera(45, 1, 1, 5000);
+export const orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 5000);
+/** Active camera — swapped for orthographic instruction-booklet look. */
+export let camera: THREE.PerspectiveCamera | THREE.OrthographicCamera = perspectiveCamera;
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0xc9d0d8, 0.85));
-scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+const hemi = new THREE.HemisphereLight(0xffffff, 0xc9d0d8, 0.85);
+scene.add(hemi);
+const ambient = new THREE.AmbientLight(0xffffff, 0.18);
+scene.add(ambient);
 
 const sun = new THREE.DirectionalLight(0xffffff, 0.85);
 sun.position.set(160, 280, 120);
@@ -39,10 +44,62 @@ const fill = new THREE.DirectionalLight(0xffffff, 0.25);
 fill.position.set(-140, 120, -100);
 scene.add(fill);
 
+/** Key light from top-front-left for instruction manuals (3-tone faces). */
+const instrKey = new THREE.DirectionalLight(0xffffff, 0);
+instrKey.position.set(-120, 260, 180);
+scene.add(instrKey);
+const instrFill = new THREE.DirectionalLight(0xffffff, 0);
+instrFill.position.set(160, 80, -40);
+scene.add(instrFill);
+
+export type PieceLook = "realistic" | "toon" | "instructions";
+
+/** Tuning lights for each aesthetic. */
+export function applyLightingForLook(look: PieceLook): void {
+  if (look === "instructions") {
+    hemi.intensity = 0.35;
+    ambient.intensity = 0.55;
+    sun.intensity = 0;
+    fill.intensity = 0;
+    instrKey.intensity = 0.85;
+    instrFill.intensity = 0.4;
+  } else if (look === "toon") {
+    hemi.intensity = 0.55;
+    ambient.intensity = 0.7;
+    sun.intensity = 0.55;
+    fill.intensity = 0.35;
+    instrKey.intensity = 0;
+    instrFill.intensity = 0;
+  } else {
+    hemi.intensity = 0.85;
+    ambient.intensity = 0.18;
+    sun.intensity = 0.85;
+    fill.intensity = 0.25;
+    instrKey.intensity = 0;
+    instrFill.intensity = 0;
+  }
+}
+
+/** Switches between perspective (realistic/toon) and orthographic (instructions). */
+export function setInstructionCamera(on: boolean): void {
+  const prev = camera;
+  camera = on ? orthoCamera : perspectiveCamera;
+  camera.position.copy(prev.position);
+  camera.quaternion.copy(prev.quaternion);
+  camera.up.copy(prev.up);
+}
+
+export function setShadowsEnabled(on: boolean): void {
+  renderer.shadowMap.enabled = on;
+  sun.castShadow = on;
+  // Force materials/shadow maps to refresh on the next frame.
+  renderer.shadowMap.needsUpdate = true;
+}
+
 /* ---------------- baseplate ---------------- */
 export const baseW = BASE_STUDS * STUD;
 
-const baseMat = new THREE.MeshStandardMaterial({ color: 0xcbd0cb, roughness: 0.75 });
+const baseMat: THREE.Material = new THREE.MeshStandardMaterial({ color: 0xa0a5a9, roughness: 0.75 });
 export const baseBox = new THREE.Mesh(new THREE.BoxGeometry(baseW, PLATE * 1.6, baseW), baseMat);
 baseBox.position.set(0, -PLATE * 0.8, 0);
 baseBox.receiveShadow = true;
@@ -51,7 +108,7 @@ scene.add(baseBox);
 
 export const baseStuds: THREE.InstancedMesh = (() => {
   const g = new THREE.CylinderGeometry(STUD * 0.3, STUD * 0.3, PLATE * 0.5, 12);
-  const m = new THREE.MeshStandardMaterial({ color: 0xc2c7c2, roughness: 0.8 });
+  const m: THREE.Material = new THREE.MeshStandardMaterial({ color: 0x94999d, roughness: 0.8 });
   const inst = new THREE.InstancedMesh(g, m, BASE_STUDS * BASE_STUDS);
   inst.receiveShadow = true;
   const mtx = new THREE.Matrix4();
@@ -145,6 +202,8 @@ scene.add(room);
 export function setEnvironmentVisible(v: boolean): void {
   room.visible = v;
 }
+
+export { sun };
 
 /** Recolors the room walls to match the active UI theme. */
 export function applyRoomTheme(theme: "light" | "dark"): void {

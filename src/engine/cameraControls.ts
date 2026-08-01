@@ -22,6 +22,19 @@ export function applyCamera(): void {
     cam.target.z + cam.radius * sp * Math.cos(cam.theta)
   );
   camera.lookAt(cam.target);
+  // Keep orthographic framing in sync with orbit radius (instruction look).
+  if ((camera as THREE.OrthographicCamera).isOrthographicCamera) {
+    const ortho = camera as THREE.OrthographicCamera;
+    const aspect = window.innerWidth / Math.max(window.innerHeight, 1);
+    const halfH = cam.radius * 0.42;
+    ortho.left = -halfH * aspect;
+    ortho.right = halfH * aspect;
+    ortho.top = halfH;
+    ortho.bottom = -halfH;
+    ortho.near = 1;
+    ortho.far = 5000;
+    ortho.updateProjectionMatrix();
+  }
 }
 
 export function panCamera(dx: number, dy: number): void {

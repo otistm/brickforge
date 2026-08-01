@@ -3,7 +3,8 @@
 .display-title .t{font-family:Fredoka; font-weight:700; font-size:26px;}
 .display-title .s{font-size:12px; color:var(--soft); letter-spacing:.12em; text-transform:uppercase; margin-top:2px;}
 body.display #stage{background:radial-gradient(120% 120% at 50% 12%, var(--display-1) 0%, var(--display-2) 100%);}
-body.display .topbar, body.display .toolrail, body.display .inv, body.display .hint, body.display .mobtabs{
+body.display .topbar, body.display .toolrail, body.display .inv, body.display #presets,
+body.display .hint, body.display .mobtabs{
   opacity:0; pointer-events:none; transition:opacity .35s;}
 body.display .exit-display{display:inline-flex;}
 body.display .display-title{display:block;}

@@ -19,6 +19,7 @@ canvas{display:block; touch-action:none;}
   border-radius:var(--r); box-shadow:var(--shadow);}
 
 /* ---------- hint / toast ---------- */
+body:has(#presets.open) .hint{opacity:0; pointer-events:none;}
 .hint{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:28;
   background:rgba(26,22,17,.86); color:#fff; font-size:12.5px; font-weight:500; padding:8px 15px;
   border-radius:999px; pointer-events:none; backdrop-filter:blur(6px); display:flex; gap:8px; align-items:center;}

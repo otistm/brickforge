@@ -6,9 +6,12 @@ import { resize, startLoop } from "./engine/loop";
 import { initBooklet } from "./features/booklet";
 import { initDisplay } from "./features/display";
 import { refreshInventory } from "./features/inventory";
+import { initPresets } from "./features/presets";
 import { initScanInventory } from "./features/scanInventory";
 import { decode, loadData } from "./features/serialize";
+import { initSettings } from "./features/settings";
 import { initShareIo } from "./features/shareIo";
+import { initRenderLook } from "./engine/renderLook";
 import { initToolRail, rotateSelection } from "./ui/controls";
 import { flashHint } from "./ui/toast";
 import { initMobileTabs } from "./ui/mobileTabs";
@@ -21,12 +24,15 @@ setRotateSelection(rotateSelection);
 
 // UI + feature wiring.
 initTheme();
+initRenderLook();
 initToolRail();
 initShareIo();
 initDisplay();
 initMobileTabs();
 initBooklet();
 initScanInventory();
+initPresets();
+initSettings();
 
 // Pointer/keyboard input + render loop.
 initControls();

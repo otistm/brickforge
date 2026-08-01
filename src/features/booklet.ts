@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { COLORS } from "../config/colors";
 import { PLATE, STUD } from "../config/constants";
 import { lookupPart } from "../config/partMap";
-import { bricks } from "../core/store";
+import { bricks, view } from "../core/store";
 import type { Brick } from "../core/types";
 import { applyCamera, cam, clampCam } from "../engine/cameraControls";
 import { hideGhost, isGhostVisible, setGhostVisible } from "../engine/ghost";
@@ -56,8 +56,6 @@ type StoredMaterial = THREE.Material | THREE.Material[];
 function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   const SZ = 860;
   renderer.setSize(SZ, SZ);
-  camera.aspect = 1;
-  camera.updateProjectionMatrix();
   const saved = { theta: cam.theta, phi: cam.phi, radius: cam.radius, target: cam.target.clone() };
   const bb = buildBounds();
   // Keep the user's current viewing angle so the booklet matches the model they
@@ -66,26 +64,48 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   cam.radius = bb.radius * 2.75;
   clampCam();
   applyCamera();
+  // Square capture: perspective uses aspect; ortho frustum is forced square.
+  if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+    (camera as THREE.PerspectiveCamera).aspect = 1;
+    camera.updateProjectionMatrix();
+  } else {
+    const ortho = camera as THREE.OrthographicCamera;
+    const half = cam.radius * 0.42;
+    ortho.left = -half;
+    ortho.right = half;
+    ortho.top = half;
+    ortho.bottom = -half;
+    ortho.updateProjectionMatrix();
+  }
   const ghostVis = isGhostVisible();
   hideGhost();
   clearHighlight();
   // Keep instruction images clean — no room/table behind the model.
   setEnvironmentVisible(false);
 
+  const isHelper = (o: THREE.Object3D) =>
+    !!(o.userData.isOutline || o.userData.isEdgeLines || o.userData.isStudHighlight);
+
   const orig = new Map<THREE.Object3D, StoredMaterial>();
   for (const b of bricks)
     b.group.traverse((o) => {
+      if (isHelper(o)) return;
       const mat = (o as THREE.Mesh).material;
       if (mat) orig.set(o, mat);
     });
 
+  const baseDecor = scene.children.filter(
+    (c) => c.userData.isOutline || c.userData.isEdgeLines
+  );
   // hero — clean "floating" model for the cover (no baseplate)
   baseBox.visible = false;
   if (baseStuds) baseStuds.visible = false;
+  baseDecor.forEach((o) => { o.visible = false; });
   shadowCatcher.visible = true;
   for (const b of bricks) {
     b.group.visible = true;
     b.group.traverse((o) => {
+      if (isHelper(o)) return;
       const stored = orig.get(o);
       if (stored) (o as THREE.Mesh).material = stored;
     });
@@ -93,9 +113,11 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   renderer.render(scene, camera);
   const hero = renderer.domElement.toDataURL("image/png");
 
-  // steps — show the baseplate as a placement reference so pieces read accurately
-  baseBox.visible = true;
-  if (baseStuds) baseStuds.visible = true;
+  // steps — keep the live look: baseplate only when not in instruction style
+  const showBase = view.pieceLook !== "instructions";
+  baseBox.visible = showBase;
+  if (baseStuds) baseStuds.visible = showBase;
+  baseDecor.forEach((o) => { o.visible = showBase; });
   shadowCatcher.visible = false;
   const imgs: string[] = [];
   const cumSet = new Set<Brick>();
@@ -106,7 +128,7 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
       const inCum = cumSet.has(b);
       b.group.visible = inCum;
       b.group.traverse((o) => {
-        if (!(o as THREE.Mesh).material) return;
+        if (isHelper(o) || !(o as THREE.Mesh).material) return;
         (o as THREE.Mesh).material = newSet.has(b) ? (orig.get(o) as StoredMaterial) : dimMat;
       });
     }
@@ -118,14 +140,17 @@ function captureSteps(steps: Brick[][]): { hero: string; imgs: string[] } {
   for (const b of bricks) {
     b.group.visible = true;
     b.group.traverse((o) => {
+      if (isHelper(o)) return;
       const stored = orig.get(o);
       if ((o as THREE.Mesh).material && stored) (o as THREE.Mesh).material = stored;
     });
   }
+  // Restore: instruction look keeps an invisible base collider for placement.
   baseBox.visible = true;
-  if (baseStuds) baseStuds.visible = true;
+  if (baseStuds) baseStuds.visible = view.pieceLook !== "instructions";
+  baseDecor.forEach((o) => { o.visible = view.pieceLook !== "instructions"; });
   shadowCatcher.visible = false;
-  setEnvironmentVisible(true);
+  setEnvironmentVisible(view.showRoom);
   setGhostVisible(ghostVis);
   cam.theta = saved.theta;
   cam.phi = saved.phi;

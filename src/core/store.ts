@@ -26,10 +26,14 @@ export const state: BuildState = {
   tool: "build",
 };
 
-/** Runtime view flags shared between camera, loop and display mode. */
+/** Runtime view flags shared between camera, loop, display mode and aesthetics. */
 export const view = {
   isDisplay: false,
   autoRotate: false,
+  /** Visual style for pieces + board. */
+  pieceLook: "realistic" as "realistic" | "toon" | "instructions",
+  showRoom: true,
+  shadows: true,
 };
 
 export function shapeDef(): ShapeDef {
