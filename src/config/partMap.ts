@@ -24,9 +24,9 @@ export const PART_NUMBERS: Partial<Record<ShapeKey, Record<string, string>>> = {
     "2x2": "3068b", "2x3": "26603", "2x4": "87079", "2x6": "69729",
   },
   jumper: { "1x2": "15573", "2x2": "87580" },
-  // Generic 45-degree slopes; only confidently-known sizes are mapped.
+  // Roof tiles (45°) — LEGO catalog names "Roof Tile" / "Roof Tile Inv."
   slope: { "1x2": "3040", "2x2": "3039", "2x3": "3038", "2x4": "3037" },
-  islope: { "1x2": "3665", "2x2": "3660", "2x3": "3747" },
+  islope: { "1x2": "3665", "1x3": "2341", "2x2": "3660", "2x3": "3747" },
   cheese: { "1x1": "54200" },
   curve: { "1x2": "11477", "2x2": "15068" },
   rbrick: { "1x1": "3062b", "2x2": "3941" },
