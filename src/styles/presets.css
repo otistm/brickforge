@@ -1,7 +1,7 @@
 #presets{position:fixed; left:50%; bottom:18px; transform:translate(-50%, calc(100% + 28px));
   z-index:34; width:min(720px, calc(100vw - 32px)); max-height:min(42vh, 360px);
-  display:flex; flex-direction:column; transition:transform .28s ease; pointer-events:auto;}
-#presets.open{transform:translate(-50%, 0);}
+  display:none; flex-direction:column; transition:transform .28s ease; pointer-events:auto;}
+#presets.open{display:flex; transform:translate(-50%, 0);}
 .presets-head{display:flex; align-items:flex-start; gap:10px; padding:14px 14px 10px;
   border-bottom:1px dashed var(--line);}
 .presets-head .k{font-family:Fredoka; font-weight:600; font-size:16px;}

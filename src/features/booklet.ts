@@ -228,11 +228,21 @@ function renderBooklet(): void {
   pages.scrollTop = 0;
 }
 
+function closeSidePanels(): void {
+  $id("presets").classList.remove("open");
+  $id("presets").setAttribute("aria-hidden", "true");
+  $id("toolrail").classList.remove("open");
+  $id("inv").classList.remove("open");
+  $id("settingsOverlay").classList.remove("open");
+  $id("settingsOverlay").setAttribute("aria-hidden", "true");
+}
+
 function openInstructions(): void {
   if (!bricks.length) {
     toast("Build something first — then I'll write the manual");
     return;
   }
+  closeSidePanels();
   const ov = $id("bookletOverlay");
   $id("bookletPages").innerHTML =
     '<div class="booklet-loading"><div class="spin"></div>Rendering your instructions…</div>';
@@ -246,5 +256,8 @@ export function initBooklet(): void {
     $id("bookletOverlay").classList.remove("show");
     $id("bookletPages").innerHTML = "";
   };
-  $id("btnPrint").onclick = () => window.print();
+  $id("btnPrint").onclick = () => {
+    closeSidePanels();
+    window.print();
+  };
 }
