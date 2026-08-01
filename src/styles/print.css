@@ -1,38 +1,86 @@
 @media print {
-  /* The app clamps html/body to height:100%; overflow:hidden for the canvas UI.
-     That clips every printed page after the first, so release it for printing. */
-  html,body{height:auto !important; overflow:visible !important; background:#fff !important;}
-  -webkit-print-color-adjust:exact !important;
-  print-color-adjust:exact !important;
-
-  /* Hide all builder chrome. Presets/settings are position:fixed panels that
-     otherwise stamp onto every printed page even when "closed" off-screen. */
-  .topbar,.toolrail,.inv,.panel,.mobtabs,.hint,#stage,.toast,#fileInput,
-  .exit-display,.display-title,#scanOverlay,#settingsOverlay,#presets{
-    display:none !important; visibility:hidden !important;
+  /* Release the app's full-viewport lock so multi-page booklets can flow. */
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  #bookletOverlay{position:static !important; display:block !important; visibility:visible !important;
-    background:#fff !important; overflow:visible !important;}
-  #bookletBar{display:none !important;}
-  #bookletPages{display:block !important; padding:0 !important; overflow:visible !important; gap:0 !important;}
+  /*
+   * Nuclear hide: every direct body child except the booklet. Piecemeal class
+   * lists kept missing panels (and a prior invalid bare declaration in this
+   * file could make the browser skip the hide rule entirely).
+   */
+  body > *:not(#bookletOverlay) {
+    display: none !important;
+  }
 
-  /* Block layout — flex + %-height images collapses step art to 0 in print engines. */
-  .page{display:block !important; width:100% !important; box-shadow:none !important; border:none !important;
-    border-radius:0 !important; min-height:0 !important; height:auto !important;
-    padding:8mm 6mm 6mm !important; page-break-after:always; break-after:page; break-inside:avoid;
-    margin:0 !important;}
-  .page:last-child{page-break-after:auto; break-after:auto;}
-  .page.cover{display:block !important; text-align:center;}
+  #bookletOverlay {
+    position: static !important;
+    display: block !important;
+    visibility: visible !important;
+    background: #fff !important;
+    overflow: visible !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+  }
+  #bookletBar { display: none !important; }
+  #bookletPages {
+    display: block !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    gap: 0 !important;
+  }
 
-  .ck-stage,.st-stage{display:block !important; flex:none !important; overflow:visible !important;
-    min-height:0 !important; height:auto !important; margin:4mm 0 !important;
-    border:1px solid #ddd !important; background:#f4f6f8 !important;}
-  .ck-stage{aspect-ratio:auto !important;}
-  .ck-stage img,.st-stage img{display:block !important; width:100% !important; max-width:100% !important;
-    height:auto !important; max-height:150mm !important; margin:0 auto !important; object-fit:contain !important;}
+  /* Block layout — flex + %-height images collapse step art to 0 in print. */
+  .page {
+    display: block !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 8mm 6mm 6mm !important;
+    page-break-after: always;
+    break-after: page;
+    break-inside: avoid;
+    margin: 0 !important;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .page.cover { display: block !important; text-align: center; }
 
-  .st-callout{position:relative !important; top:auto !important; right:auto !important;
-    display:inline-flex !important; margin:2mm 0 3mm !important; max-width:100% !important;}
+  .ck-stage, .st-stage {
+    display: block !important;
+    flex: none !important;
+    overflow: visible !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 4mm 0 !important;
+    border: 1px solid #ddd !important;
+    background: #f4f6f8 !important;
+  }
+  .ck-stage { aspect-ratio: auto !important; }
+  .ck-stage img, .st-stage img {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 150mm !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+  }
+
+  .st-callout {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    display: inline-flex !important;
+    margin: 2mm 0 3mm !important;
+    max-width: 100% !important;
+  }
 }
-@page{margin:12mm;}
+@page { margin: 12mm; }

@@ -1,5 +1,18 @@
 #bookletOverlay{position:fixed; inset:0; z-index:80; background:var(--booklet-bg); display:none; flex-direction:column;}
 #bookletOverlay.show{display:flex;}
+/* While the booklet is open, keep builder chrome out of the accessibility tree
+   and out of accidental print capture (print.css also nukes body > *:not(#bookletOverlay)). */
+body.booklet-open .topbar,
+body.booklet-open .toolrail,
+body.booklet-open .inv,
+body.booklet-open #presets,
+body.booklet-open #settingsOverlay,
+body.booklet-open #scanOverlay,
+body.booklet-open .mobtabs,
+body.booklet-open .hint,
+body.booklet-open .toast,
+body.booklet-open .exit-display,
+body.booklet-open .display-title{visibility:hidden !important; pointer-events:none !important;}
 #bookletBar{height:58px; flex:none; display:flex; align-items:center; gap:10px; padding:0 16px;
   background:var(--paper); border-bottom:1px solid var(--line); box-shadow:var(--shadow); z-index:2;}
 #bookletBar .bk-h{font-family:Fredoka; font-weight:700; font-size:18px;}

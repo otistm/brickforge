@@ -237,27 +237,30 @@ function closeSidePanels(): void {
   $id("settingsOverlay").setAttribute("aria-hidden", "true");
 }
 
+function setBookletOpen(open: boolean): void {
+  document.body.classList.toggle("booklet-open", open);
+  $id("bookletOverlay").classList.toggle("show", open);
+  if (!open) $id("bookletPages").innerHTML = "";
+}
+
 function openInstructions(): void {
   if (!bricks.length) {
     toast("Build something first — then I'll write the manual");
     return;
   }
   closeSidePanels();
-  const ov = $id("bookletOverlay");
   $id("bookletPages").innerHTML =
     '<div class="booklet-loading"><div class="spin"></div>Rendering your instructions…</div>';
-  ov.classList.add("show");
+  setBookletOpen(true);
   setTimeout(renderBooklet, 50);
 }
 
 export function initBooklet(): void {
   $id("btnInstr").onclick = openInstructions;
-  $id("btnCloseBooklet").onclick = () => {
-    $id("bookletOverlay").classList.remove("show");
-    $id("bookletPages").innerHTML = "";
-  };
+  $id("btnCloseBooklet").onclick = () => setBookletOpen(false);
   $id("btnPrint").onclick = () => {
     closeSidePanels();
-    window.print();
+    // Defer so the browser applies closed-panel class changes before snapshotting.
+    requestAnimationFrame(() => window.print());
   };
 }
