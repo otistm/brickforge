@@ -1,4 +1,6 @@
 import type { ShapeKey } from "../core/types";
+import { COLORS } from "./colors";
+import { ownedQty, PALETTE } from "./ownedParts";
 import { SHAPES } from "./shapes";
 
 /** One piece in a preset, authored in grid / plate units. */
@@ -22,26 +24,7 @@ export interface Preset {
   bricks: PresetBrick[];
 }
 
-/* Color indices into COLORS */
-const W = 0;
-const LBG = 2;
-const DBG = 3;
-const K = 4;
-const R = 5;
-const DR = 6;
-const DP = 10;
-const P = 11;
-const ML = 12;
-const BLU = 14;
-const DG = 20;
-const G = 21;
-const Y = 26;
-const BLY = 27;
-const BLO = 28;
-const RB = 32;
-const DB = 33;
-const T = 35;
-const DT = 36;
+const { W, LBG, DAZ, K, DR, DP, MG, PU, BLU, DG, G, Y, R, RB } = PALETTE;
 
 function p(
   gx: number,
@@ -59,10 +42,14 @@ function p(
 /**
  * Validates a preset against the same rules the builder enforces at placement
  * time: real part sizes, no shared cells, and every piece resting on either the
- * baseplate or a piece below it. Throws on the first problem found.
+ * baseplate or a piece below it. On top of that it checks the bill of materials
+ * against the physical collection in `ownedParts`, so a preset can never ask
+ * for a part — or more copies of a part — than the user actually has.
+ * Throws on the first problem found.
  */
 export function assertPresetValid(preset: Preset): void {
   const owners = new Map<string, PresetBrick>();
+  const used = new Map<string, { b: PresetBrick; n: number }>();
 
   for (const b of preset.bricks) {
     const def = SHAPES[b.shape];
@@ -71,6 +58,11 @@ export function assertPresetValid(preset: Preset): void {
         `Preset "${preset.id}": ${b.shape} has no ${b.w0}x${b.d0} size`
       );
     }
+    const tally = `${b.shape}|${b.w0}x${b.d0}|${b.ci}`;
+    const seen = used.get(tally);
+    if (seen) seen.n++;
+    else used.set(tally, { b, n: 1 });
+
     const rot = b.rot ?? 0;
     const ew = rot % 2 ? b.d0 : b.w0;
     const ed = rot % 2 ? b.w0 : b.d0;
@@ -105,356 +97,295 @@ export function assertPresetValid(preset: Preset): void {
       );
     }
   }
+
+  for (const { b, n } of used.values()) {
+    const have = ownedQty(b.shape, b.w0, b.d0, b.ci);
+    const part = `${COLORS[b.ci]?.[0] ?? b.ci} ${b.shape} ${b.w0}x${b.d0}`;
+    if (have === 0) {
+      throw new Error(`Preset "${preset.id}": ${part} is not in the collection`);
+    }
+    if (n > have) {
+      throw new Error(`Preset "${preset.id}": needs ${n}x ${part}, only ${have} owned`);
+    }
+  }
 }
 
 /* ================================================================== */
-/*  Apple — round purple fruit: narrow foot, flared skirt, domed top   */
+/*  Apple — octagonal belly in dark pink, purple neck, stem and leaf   */
 /* ================================================================== */
+
+/**
+ * A 6x6 course with all four corners cut back two studs, which is as round as
+ * plain bricks get. Every piece reaches inward far enough to land on the
+ * narrower course below it.
+ */
+function appleRing6(gy: number): PresetBrick[] {
+  return [
+    p(-2, gy, -3, 2, 4, "brick", DP, 1),
+    p(-2, gy, 1, 2, 4, "brick", DP, 1),
+    p(-3, gy, -1, 2, 2, "brick", DP),
+    p(1, gy, -1, 2, 2, "brick", DP),
+    p(-1, gy, -1, 2, 2, "brick", DP),
+  ];
+}
+
+/** The same corner-cut trick one size up, for the two widest courses. */
+function appleRing8(gy: number): PresetBrick[] {
+  return [
+    p(-3, gy, -4, 2, 4, "brick", DP, 1),
+    p(1, gy, -4, 2, 2, "brick", DP),
+    p(-3, gy, 2, 2, 4, "brick", DP, 1),
+    p(1, gy, 2, 2, 2, "brick", DP),
+    p(-4, gy, -2, 2, 4, "brick", DP),
+    p(-2, gy, -2, 2, 4, "brick", DP),
+    p(0, gy, -2, 2, 4, "brick", DP),
+    p(2, gy, -2, 2, 4, "brick", DP),
+  ];
+}
+
 const APPLE: PresetBrick[] = [
-  // Foot — small round disc so the fruit sits on a point, not a slab
-  p(-2, 0, -2, 2, 2, "rplate", DP),
-  p(0, 0, -2, 2, 2, "rplate", DP),
-  p(-2, 0, 0, 2, 2, "rplate", DP),
-  p(0, 0, 0, 2, 2, "rplate", DP),
+  // Foot — 4x4, so the fruit tucks in where it meets the board
+  p(-2, 0, -2, 2, 4, "brick", DP),
+  p(0, 0, -2, 2, 4, "brick", DP),
 
-  // Skirt — inverted roof tiles flare 4 wide out to 6, round corners
-  p(-3, 1, -3, 2, 2, "rbrick", DP),
-  p(1, 1, -3, 2, 2, "rbrick", DP),
-  p(-3, 1, 1, 2, 2, "rbrick", DP),
-  p(1, 1, 1, 2, 2, "rbrick", DP),
-  p(-1, 1, -3, 2, 2, "islope", DP),
-  p(-1, 1, 1, 2, 2, "islope", DP, 2),
-  p(-3, 1, -1, 2, 2, "islope", DP, 1),
-  p(1, 1, -1, 2, 2, "islope", DP, 3),
-  p(-1, 1, -1, 2, 2, "brick", P),
+  // Belly — swells 6 wide, then 8 across the equator, then back to 6
+  ...appleRing6(3),
+  ...appleRing8(6),
+  ...appleRing8(9),
+  ...appleRing6(12),
 
-  // Equator — widest course, round corners, lavender cheek
-  p(-3, 4, -3, 2, 2, "rbrick", P),
-  p(1, 4, -3, 2, 2, "rbrick", P),
-  p(-3, 4, 1, 2, 2, "rbrick", P),
-  p(1, 4, 1, 2, 2, "rbrick", P),
-  p(-1, 4, -3, 2, 2, "brick", P),
-  p(-1, 4, 1, 2, 2, "brick", P),
-  p(-3, 4, -1, 2, 2, "brick", ML),
-  p(1, 4, -1, 2, 2, "brick", P),
-  p(-1, 4, -1, 2, 2, "brick", P),
+  // Shoulder — roof tiles pull the last course in to the neck
+  p(-1, 15, -3, 2, 2, "slope", MG),
+  p(-1, 15, 1, 2, 2, "slope", MG, 2),
+  p(-3, 15, -1, 2, 2, "slope", MG, 1),
+  p(1, 15, -1, 2, 2, "slope", MG, 3),
+  p(-1, 15, -1, 2, 2, "brick", DP),
 
-  // Shoulder — roof tiles pull 6 wide back in to 4, corners left open
-  p(-2, 7, -2, 2, 2, "brick", P),
-  p(0, 7, -2, 2, 2, "brick", P),
-  p(-2, 7, 0, 2, 2, "brick", P),
-  p(0, 7, 0, 2, 2, "brick", P),
-  p(-2, 7, -3, 1, 1, "slope", P),
-  p(-1, 7, -3, 1, 1, "slope", P),
-  p(0, 7, -3, 1, 1, "slope", P),
-  p(1, 7, -3, 1, 1, "slope", P),
-  p(-2, 7, 2, 1, 1, "slope", P, 2),
-  p(-1, 7, 2, 1, 1, "slope", P, 2),
-  p(0, 7, 2, 1, 1, "slope", P, 2),
-  p(1, 7, 2, 1, 1, "slope", P, 2),
-  p(-3, 7, -2, 1, 1, "slope", P, 1),
-  p(-3, 7, -1, 1, 1, "slope", P, 1),
-  p(-3, 7, 0, 1, 1, "slope", P, 1),
-  p(-3, 7, 1, 1, 1, "slope", P, 1),
-  p(2, 7, -2, 1, 1, "slope", P, 3),
-  p(2, 7, -1, 1, 1, "slope", P, 3),
-  p(2, 7, 0, 1, 1, "slope", P, 3),
-  p(2, 7, 1, 1, 1, "slope", P, 3),
+  // Neck — purple, and the anchor both the stem and the leaf root into
+  p(-1, 18, -1, 2, 2, "brick", PU),
 
-  // Dome — second taper, 4 wide down to 2
-  p(-1, 10, -1, 2, 2, "rbrick", P),
-  p(-1, 10, -2, 1, 1, "slope", P),
-  p(0, 10, -2, 1, 1, "slope", P),
-  p(-1, 10, 1, 1, 1, "slope", P, 2),
-  p(0, 10, 1, 1, 1, "slope", P, 2),
-  p(-2, 10, -1, 1, 1, "slope", P, 1),
-  p(-2, 10, 0, 1, 1, "slope", P, 1),
-  p(1, 10, -1, 1, 1, "slope", P, 3),
-  p(1, 10, 0, 1, 1, "slope", P, 3),
+  // Stem
+  p(0, 21, 0, 1, 1, "brick", RB),
+  p(0, 24, 0, 1, 1, "brick", RB),
 
-  // Crown well
-  p(-1, 13, -1, 2, 2, "rplate", DP),
-
-  // Stem and leaf — cheese sits on the tall end of the curve (local -z)
-  p(0, 14, 0, 1, 1, "rbrick", RB),
-  p(0, 17, 0, 1, 1, "cone", RB),
-  p(-1, 14, -1, 1, 2, "curve", G),
-  p(-1, 16, -1, 1, 1, "cheese", DG, 2),
+  // Leaf — a curved slope tips the blade over
+  p(-1, 21, -1, 1, 2, "brick", G),
+  p(-1, 24, -1, 1, 2, "curve", DG),
 ];
 
 /* ================================================================== */
-/*  Sword — grip, twin crossguard, and a 3-wide blade                  */
+/*  Sword — black stand, banded grip, wide guard, two-tone blade       */
 /* ================================================================== */
+/**
+ * One blade course: white edges either side of a grey fuller. Four studs wide
+ * while the 1x4s hold out, then the same span rebuilt from pairs of 1x2s once
+ * the light grey 1x4s run out.
+ */
+function bladeCourse(gy: number, wide: boolean): PresetBrick[] {
+  if (wide) {
+    return [
+      p(-2, gy, -1, 1, 4, "brick", W, 1),
+      p(-2, gy, 0, 1, 4, "brick", LBG, 1),
+      p(-2, gy, 1, 1, 4, "brick", W, 1),
+    ];
+  }
+  return [
+    p(-2, gy, -1, 1, 2, "brick", W, 1),
+    p(0, gy, -1, 1, 2, "brick", W, 1),
+    p(-2, gy, 0, 1, 2, "brick", LBG, 1),
+    p(0, gy, 0, 1, 2, "brick", LBG, 1),
+    p(-2, gy, 1, 1, 2, "brick", W, 1),
+    p(0, gy, 1, 1, 2, "brick", W, 1),
+  ];
+}
+
 const SWORD: PresetBrick[] = [
-  // Pedestal
-  p(-2, 0, -2, 4, 4, "plate", DBG),
-  p(-1, 1, -1, 2, 2, "tile", K),
-  p(-1, 2, -1, 2, 2, "rplate", K),
+  // Pedestal — 6x6 of black, a dark red band, then a black riser
+  p(-3, 0, -3, 2, 6, "brick", K, 1),
+  p(-3, 0, -1, 2, 6, "brick", K, 1),
+  p(-3, 0, 1, 2, 6, "brick", K, 1),
+  p(-2, 3, -2, 2, 2, "brick", DR),
+  p(0, 3, -2, 2, 2, "brick", DR),
+  p(-2, 3, 0, 2, 2, "brick", DR),
+  p(0, 3, 0, 2, 2, "brick", DR),
+  p(-2, 6, -2, 2, 4, "brick", K),
+  p(0, 6, -2, 2, 4, "brick", K),
 
-  // Pommel
-  p(-1, 3, -1, 2, 2, "rbrick", BLO),
-  p(0, 6, 0, 1, 1, "rplate", Y),
+  // Pommel and banded grip
+  p(-1, 9, -1, 2, 2, "brick", Y),
+  p(-1, 12, -1, 2, 2, "brick", RB),
+  p(-1, 15, -1, 2, 2, "brick", K),
+  p(-1, 18, -1, 2, 2, "brick", RB),
+  p(-1, 21, -1, 2, 2, "brick", K),
 
-  // Grip, banded
-  p(0, 7, 0, 1, 1, "brick", RB),
-  p(0, 10, 0, 1, 1, "brick", DB),
-  p(0, 13, 0, 1, 1, "brick", RB),
-  p(0, 16, 0, 1, 1, "rbrick", DB),
+  // Crossguard — two arms at right angles, capped in red at each quillon
+  p(-3, 24, -1, 2, 6, "brick", Y, 1),
+  p(-3, 27, -1, 1, 2, "brick", R),
+  p(2, 27, -1, 1, 2, "brick", R),
+  p(-1, 27, -3, 2, 6, "brick", Y),
+  p(-1, 30, -3, 1, 2, "brick", R, 1),
+  p(-1, 30, 2, 1, 2, "brick", R, 1),
 
-  // Lower crossguard arm, spanning x over the grip
-  p(-3, 19, 0, 1, 6, "brick", BLO, 1),
-  p(-3, 22, 0, 1, 1, "cheese", BLY, 3),
-  p(2, 22, 0, 1, 1, "cheese", BLY, 1),
+  // Blade
+  ...bladeCourse(30, true),
+  ...bladeCourse(33, true),
+  ...bladeCourse(36, true),
+  ...bladeCourse(39, false),
+  ...bladeCourse(42, false),
+  ...bladeCourse(45, false),
 
-  // Upper crossguard arm, spanning z over the lower arm
-  p(0, 22, -3, 1, 6, "brick", Y),
-  p(0, 25, -3, 1, 1, "cheese", BLY, 2),
-  p(0, 25, 2, 1, 1, "cheese", BLY),
-
-  // Ricasso — first blade course spans the guard so the edges land on it
-  p(-1, 25, 0, 1, 3, "brick", LBG, 1),
-
-  // Blade — bright edges either side of a dark fuller
-  p(-1, 28, 0, 1, 1, "brick", W),
-  p(0, 28, 0, 1, 1, "brick", DBG),
-  p(1, 28, 0, 1, 1, "brick", W),
-  p(-1, 31, 0, 1, 1, "brick", LBG),
-  p(0, 31, 0, 1, 1, "brick", DBG),
-  p(1, 31, 0, 1, 1, "brick", LBG),
-  p(-1, 34, 0, 1, 1, "brick", W),
-  p(0, 34, 0, 1, 1, "brick", DBG),
-  p(1, 34, 0, 1, 1, "brick", W),
-  p(-1, 37, 0, 1, 1, "brick", LBG),
-  p(0, 37, 0, 1, 1, "brick", DBG),
-  p(1, 37, 0, 1, 1, "brick", LBG),
-
-  // Point
-  p(-1, 40, 0, 1, 3, "brick", W, 1),
-  p(-1, 43, 0, 1, 1, "cheese", LBG, 3),
-  p(1, 43, 0, 1, 1, "cheese", LBG, 1),
-  p(0, 43, 0, 1, 1, "cone", LBG),
+  // Point — narrows to two studs, then one
+  p(-1, 48, -1, 1, 2, "brick", W, 1),
+  p(-1, 48, 0, 1, 2, "brick", LBG, 1),
+  p(-1, 48, 1, 1, 2, "brick", W, 1),
+  p(-1, 51, 0, 1, 2, "brick", W, 1),
+  p(-1, 54, 0, 1, 1, "brick", W),
 ];
 
 /* ================================================================== */
-/*  Horn — stepped spiral, each course overlapping the one below       */
+/*  Raygun — stands on its grip, barrel held level by a forward vane   */
 /* ================================================================== */
-const HORN: PresetBrick[] = [
-  // Mount
-  p(-2, 0, -2, 4, 4, "plate", DT),
-  p(-1, 1, -1, 2, 2, "rplate", RB),
-  p(-1, 2, -1, 2, 2, "rbrick", T),
+const RAYGUN: PresetBrick[] = [
+  // Power cell, foot and grip column
+  p(-10, 0, -1, 2, 2, "brick", G),
+  p(-8, 0, -1, 2, 4, "brick", K, 1),
+  p(-10, 3, -1, 2, 2, "brick", G),
+  p(-8, 3, -1, 2, 2, "brick", K),
+  p(-6, 3, -1, 1, 2, "brick", K),
+  p(-10, 6, -1, 2, 4, "brick", K, 1),
+  p(-6, 6, -1, 1, 2, "brick", R),
 
-  // Lower shaft
-  p(-1, 5, -1, 2, 2, "brick", T),
+  // Forward vane — the second foot that keeps the barrel level
+  p(1, 0, -1, 2, 2, "brick", BLU),
+  p(1, 3, -1, 2, 2, "brick", BLU),
+  p(1, 6, -1, 2, 2, "brick", BLU),
 
-  // Step toward +x
-  p(0, 8, -1, 2, 2, "brick", T),
-  p(-1, 8, -1, 1, 1, "slope", DT, 1),
-  p(-1, 8, 0, 1, 1, "slope", DT, 1),
+  // Receiver deck, bridging grip to vane
+  p(-10, 9, -1, 2, 6, "brick", BLU, 1),
+  p(-4, 9, -1, 2, 6, "brick", BLU, 1),
+  p(2, 9, -1, 2, 2, "brick", BLU),
 
-  // Ring band
-  p(0, 11, -1, 2, 2, "plate", DB),
-  p(0, 12, -1, 2, 2, "rbrick", T),
+  // Second course, reaching two studs further forward
+  p(-10, 12, -1, 2, 4, "brick", BLU, 1),
+  p(-6, 12, -1, 2, 4, "brick", BLU, 1),
+  p(-2, 12, -1, 2, 4, "brick", BLU, 1),
+  p(2, 12, -1, 2, 4, "brick", BLU, 1),
 
-  // Step toward +z
-  p(0, 15, 0, 2, 2, "brick", T),
-  p(0, 15, -1, 1, 1, "slope", DT),
-  p(1, 15, -1, 1, 1, "slope", DT),
+  // Third course carries the barrel out to a white muzzle
+  p(-10, 15, -1, 2, 4, "brick", BLU, 1),
+  p(-6, 15, -1, 2, 4, "brick", BLU, 1),
+  p(-2, 15, -1, 2, 4, "brick", BLU, 1),
+  p(2, 15, -1, 2, 2, "brick", BLU),
+  p(4, 15, -1, 2, 4, "brick", W, 1),
 
-  // Step toward +x
-  p(1, 18, 0, 2, 2, "brick", T),
-  p(0, 18, 0, 1, 1, "slope", DT, 1),
-  p(0, 18, 1, 1, 1, "slope", DT, 1),
+  // Rear deck steps down to the barrel, coil rings, muzzle glow
+  p(-10, 18, -1, 2, 4, "brick", BLU, 1),
+  p(-6, 18, -1, 2, 2, "slope", BLU, 3),
+  p(-1, 18, -1, 1, 2, "brick", Y),
+  p(0, 18, -1, 1, 2, "brick", BLU),
+  p(1, 18, -1, 1, 2, "brick", Y),
+  p(6, 18, -1, 1, 2, "brick", R),
+  p(7, 18, -1, 1, 2, "brick", R),
 
-  // Ring band
-  p(1, 21, 0, 2, 2, "plate", DB),
-  p(1, 22, 0, 2, 2, "brick", T),
-
-  // Diagonal step
-  p(2, 25, 1, 2, 2, "brick", T),
-  p(1, 25, 0, 1, 1, "slope", DT, 1),
-  p(1, 25, 1, 1, 1, "slope", DT, 1),
-  p(2, 25, 0, 1, 1, "slope", DT),
-
-  // Thin out to one stud wide
-  p(3, 28, 1, 1, 2, "brick", T),
-  p(2, 28, 1, 1, 1, "slope", DT, 1),
-  p(2, 28, 2, 1, 1, "slope", DT, 1),
-  p(3, 31, 2, 1, 2, "brick", T),
-  p(3, 31, 1, 1, 1, "cheese", DT, 2),
-
-  // Tip
-  p(3, 34, 2, 1, 1, "cheese", DT, 2),
-  p(3, 34, 3, 1, 1, "rbrick", BLY),
-  p(3, 37, 3, 1, 1, "cone", W),
+  // Swept tail and sight
+  p(-10, 21, -1, 2, 2, "slope", BLU, 1),
+  p(-8, 21, -1, 1, 2, "brick", LBG),
 ];
 
 /* ================================================================== */
-/*  Crown — 6x6 gold band, jewelled rim, points and a center spire     */
+/*  Crown — hollow 6x6 gold band, raised points, jewelled tips         */
 /* ================================================================== */
+
+/** One course of the hollow 6x6 gold band: two side walls, two end walls. */
+function goldRing(gy: number): PresetBrick[] {
+  return [
+    p(-3, gy, -3, 1, 4, "brick", Y),
+    p(-3, gy, 1, 1, 2, "brick", Y),
+    p(2, gy, -3, 1, 4, "brick", Y),
+    p(2, gy, 1, 1, 2, "brick", Y),
+    p(-2, gy, -3, 1, 4, "brick", Y, 1),
+    p(-2, gy, 2, 1, 4, "brick", Y, 1),
+  ];
+}
+
 const CROWN: PresetBrick[] = [
-  // Velvet base
-  p(-3, 0, -3, 2, 6, "plate", DG),
-  p(-1, 0, -3, 2, 6, "plate", DG),
-  p(1, 0, -3, 2, 6, "plate", DG),
+  ...goldRing(0),
+  ...goldRing(3),
 
-  // Band footing + cushion
-  p(-3, 1, -3, 1, 6, "plate", BLO, 1),
-  p(-3, 1, 2, 1, 6, "plate", BLO, 1),
-  p(-3, 1, -2, 1, 4, "plate", BLO),
-  p(2, 1, -2, 1, 4, "plate", BLO),
-  p(-2, 1, -2, 4, 4, "tile", K),
-
-  // Gold band
-  p(-3, 2, -3, 1, 2, "brick", Y, 1),
-  p(-1, 2, -3, 1, 2, "brick", BLO, 1),
-  p(1, 2, -3, 1, 2, "brick", Y, 1),
-  p(-3, 2, 2, 1, 2, "brick", Y, 1),
-  p(-1, 2, 2, 1, 2, "brick", BLO, 1),
-  p(1, 2, 2, 1, 2, "brick", Y, 1),
-  p(-3, 2, -2, 1, 2, "brick", BLO),
-  p(-3, 2, 0, 1, 2, "brick", Y),
-  p(2, 2, -2, 1, 2, "brick", BLO),
-  p(2, 2, 0, 1, 2, "brick", Y),
-
-  // Inner ledge + jewel column
-  p(-2, 2, -2, 1, 4, "plate", DT, 1),
-  p(-2, 2, 1, 1, 4, "plate", DT, 1),
-  p(-2, 2, -1, 1, 2, "plate", DT),
-  p(1, 2, -1, 1, 2, "plate", DT),
-  p(-1, 2, -1, 2, 2, "rbrick", DR),
-
-  // Upper rim
-  p(-3, 5, -3, 1, 6, "plate", BLY, 1),
-  p(-3, 5, 2, 1, 6, "plate", BLY, 1),
-  p(-3, 5, -2, 1, 4, "plate", BLY),
-  p(2, 5, -2, 1, 4, "plate", BLY),
-  p(-1, 5, -1, 2, 2, "rplate", BLY),
-
-  // Bridges tying the rim to the center spire
-  p(-3, 6, 0, 1, 4, "plate", Y, 1),
-  p(1, 6, 0, 1, 2, "plate", Y, 1),
-  p(0, 6, -3, 1, 3, "plate", Y),
-  p(0, 6, 1, 1, 2, "plate", Y),
-
-  // Center spire
-  p(0, 7, 0, 1, 1, "rplate", R),
-  p(0, 8, 0, 1, 1, "cone", R),
-
-  // Cardinal points
+  // Points rising off the band — four corners plus four cardinals
+  p(-3, 6, -3, 1, 1, "brick", Y),
+  p(2, 6, -3, 1, 1, "brick", Y),
+  p(-3, 6, 2, 1, 1, "brick", Y),
+  p(2, 6, 2, 1, 1, "brick", Y),
   p(-1, 6, -3, 1, 1, "brick", Y),
-  p(-1, 9, -3, 1, 1, "cone", BLO),
   p(-1, 6, 2, 1, 1, "brick", Y),
-  p(-1, 9, 2, 1, 1, "cone", BLO),
   p(-3, 6, -1, 1, 1, "brick", Y),
-  p(-3, 9, -1, 1, 1, "cone", BLO),
   p(2, 6, -1, 1, 1, "brick", Y),
-  p(2, 9, -1, 1, 1, "cone", BLO),
 
-  // Corner fleurs (shorter than the cardinals)
-  p(-3, 6, -3, 1, 1, "cone", BLY),
-  p(2, 6, -3, 1, 1, "cone", BLY),
-  p(-3, 6, 2, 1, 1, "cone", BLY),
-  p(2, 6, 2, 1, 1, "cone", BLY),
-
-  // Jewels set into the rim
-  p(-2, 6, -3, 1, 1, "rplate", R),
-  p(1, 6, -3, 1, 1, "rplate", BLU),
-  p(-2, 6, 2, 1, 1, "rplate", BLU),
-  p(1, 6, 2, 1, 1, "rplate", G),
-  p(-3, 6, -2, 1, 1, "rplate", BLU),
-  p(-3, 6, 1, 1, 1, "rplate", G),
-  p(2, 6, -2, 1, 1, "rplate", G),
-  p(2, 6, 1, 1, 1, "rplate", R),
+  // Jewelled corner tips
+  p(-3, 9, -3, 1, 1, "brick", R),
+  p(2, 9, -3, 1, 1, "brick", DAZ),
+  p(-3, 9, 2, 1, 1, "brick", G),
+  p(2, 9, 2, 1, 1, "brick", R),
 ];
 
 /* ================================================================== */
-/*  Key — laid flat on the plate: ring bow, channeled shaft, cut bit   */
+/*  Key — laid flat on the plate: ring bow, long shaft, cut bit        */
 /* ================================================================== */
 const KEY: PresetBrick[] = [
-  // Bow ring, hollow center
-  p(-3, 0, -3, 1, 6, "plate", BLO, 1),
-  p(-3, 0, 2, 1, 6, "plate", BLO, 1),
-  p(-3, 0, -2, 1, 4, "plate", Y),
-  p(2, 0, -2, 1, 4, "plate", Y),
+  // Bow — the same hollow ring the crown uses, doubled up for depth
+  ...goldRing(0),
+  ...goldRing(3),
 
-  // Shaft
-  p(3, 0, -1, 2, 8, "plate", Y, 1),
+  // Shaft, running out from the bow along +x
+  p(3, 0, -1, 2, 6, "brick", Y, 1),
+  p(9, 0, -1, 2, 4, "brick", Y, 1),
 
-  // Bit and teeth
-  p(11, 0, -1, 2, 2, "plate", BLO),
-  p(13, 0, -1, 1, 2, "plate", BLO),
-  p(14, 0, -1, 1, 2, "plate", BLY),
-  p(11, 0, -3, 2, 2, "plate", Y),
-  p(13, 0, -2, 1, 1, "plate", Y),
+  // Bit — a tooth dropping off the shaft, then the tip
+  p(11, 0, -3, 2, 2, "brick", Y),
+  p(13, 0, -1, 1, 2, "brick", Y),
 
-  // Raised faces
-  p(-3, 1, -3, 1, 6, "tile", BLY, 1),
-  p(-3, 1, 2, 1, 6, "tile", BLY, 1),
-  p(-3, 1, -2, 1, 4, "tile", BLY),
-  p(2, 1, -2, 1, 4, "tile", BLY),
-  p(3, 1, -1, 1, 8, "tile", BLY, 1),
-  p(3, 1, 0, 1, 8, "tile", DT, 1),
-  p(11, 1, -1, 2, 2, "tile", BLY),
-  p(13, 1, -1, 1, 2, "tile", DT),
-  p(11, 1, -3, 2, 2, "tile", DT),
-  p(13, 1, -2, 1, 1, "tile", DT),
-
-  // Rounded bow corners
-  p(-3, 2, -3, 1, 1, "rbrick", Y),
-  p(2, 2, -3, 1, 1, "rbrick", Y),
-  p(-3, 2, 2, 1, 1, "rbrick", Y),
-  p(2, 2, 2, 1, 1, "rbrick", Y),
-
-  // Bow gems
-  p(-1, 2, -3, 1, 1, "rplate", R),
-  p(0, 2, -3, 1, 1, "rplate", BLU),
-  p(-1, 2, 2, 1, 1, "rplate", BLU),
-  p(0, 2, 2, 1, 1, "rplate", R),
-  p(-3, 2, -1, 1, 1, "rplate", G),
-  p(-3, 2, 0, 1, 1, "rplate", G),
-  p(2, 2, -1, 1, 1, "rplate", R),
-  p(2, 2, 0, 1, 1, "rplate", R),
-
-  // Bit point
-  p(13, 2, -1, 1, 1, "cheese", Y, 1),
-  p(13, 2, 0, 1, 1, "cheese", Y, 1),
+  // Gems set into the bow
+  p(-1, 6, -3, 1, 1, "brick", R),
+  p(-1, 6, 2, 1, 1, "brick", DAZ),
+  p(-3, 6, -1, 1, 1, "brick", R),
+  p(2, 6, -1, 1, 1, "brick", DAZ),
 ];
 
 export const PRESETS: Preset[] = [
   {
     id: "apple",
     name: "Apple",
-    blurb: "A round purple fruit with a soft dome, stem, and green leaf.",
-    accent: "#81007B",
+    blurb: "A rounded pink fruit with a purple neck, brown stem, and green leaf.",
+    accent: "#C870A0",
     bricks: APPLE,
   },
   {
     id: "sword",
     name: "Sword",
-    blurb: "Banded grip, twin crossguard, and a fullered blade.",
+    blurb: "Stone plinth, banded grip, crossed guard, and a fullered blade.",
     accent: "#A0A5A9",
     bricks: SWORD,
   },
   {
-    id: "horn",
-    name: "Horn",
-    blurb: "A stepped spiral horn that twists up to a pale tip.",
-    accent: "#E4CD9E",
-    bricks: HORN,
+    id: "raygun",
+    name: "Raygun",
+    blurb: "Stands on its grip: coil barrel, glowing muzzle, green power cell.",
+    accent: "#0055BF",
+    bricks: RAYGUN,
   },
   {
     id: "crown",
     name: "Crown",
-    blurb: "Gold band with jewelled rim, tall points, and a spire.",
-    accent: "#F8BB3D",
+    blurb: "Hollow gold band with eight points and jewelled corners.",
+    accent: "#F2CD37",
     bricks: CROWN,
   },
   {
     id: "key",
     name: "Key",
-    blurb: "Laid flat: ring bow, channeled shaft, and a cut bit.",
-    accent: "#F5C518",
+    blurb: "Laid flat: ring bow, long shaft, and a cut bit.",
+    accent: "#F2CD37",
     bricks: KEY,
   },
 ];
